@@ -162,9 +162,9 @@ std::string FiniteAutomata::RandomState()
 	return std::string(1, randState);
 }
 
-std::map<std::string, std::string> FiniteAutomata::GetStatesConnectedVia(const std::string& state) const
+std::vector<std::pair<std::string, std::string>> FiniteAutomata::GetStatesConnectedVia(const std::string& state) const
 {
-	std::map<std::string, std::string> connectedStates{};
+	std::vector<std::pair<std::string, std::string>> connectedStates{};
 	std::vector<Transition> stateOnLeft, stateOnRight;
 
 	auto isStateOnLeft = [&state](const Transition& t) { return t.GetArguments().first == state; };
@@ -179,7 +179,8 @@ std::map<std::string, std::string> FiniteAutomata::GetStatesConnectedVia(const s
 		{
 			if (onRight.GetArguments().first != state && onLeft.GetResult() != state)
 			{
-				connectedStates.insert(std::make_pair(onRight.GetArguments().first,
+				std::cout << "\nright: " << onRight.GetArguments().first << "\nleft: " << onLeft.GetResult() << "\n";
+				connectedStates.push_back(std::make_pair(onRight.GetArguments().first,
 					onLeft.GetResult()));
 			}
 		}
@@ -232,19 +233,23 @@ RegEx FiniteAutomata::ComputeRegexForStates(const std::string& p, const std::str
 	auto kq = GetDirectTransitionLabelBetween(k, q);
 
 	kk = kk.KleeneStar();
+	std::cout << "kk: " << kk << "\n";
 	if (kk.GetStringPattern() != lambda)
 	{
 		kk = kk.Concatenation(kq);
 	}
+	std::cout << "kkkq: " << kk << "\n";
 	pk = pk.Concatenation(kk);
+	std::cout << "pkkkkq: " << pk << "\n";
 	pq = pq.Union(pk);
+	std::cout << "pq: " << pq << "\n";
 	return pq;
 }
 
 void FiniteAutomata::ReplaceLabels()
 {
 	std::string randomState = RandomState();
-	std::map<std::string, std::string>  paths = GetStatesConnectedVia(randomState);
+	std::vector<std::pair<std::string, std::string>>  paths = GetStatesConnectedVia(randomState);
 
 	if (!paths.empty())
 	{

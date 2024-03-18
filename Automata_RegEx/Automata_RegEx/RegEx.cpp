@@ -25,11 +25,16 @@ const std::string& RegEx::GetStringPattern() const
 	return m_stringPattern;
 }
 
+void RegEx::SetRegexPattern(const std::string& pattern)
+{
+	m_pattern = std::regex(pattern);
+}
+
 RegEx RegEx::Union(const RegEx& rgx) const
 {
 	if (m_stringPattern.empty()) { return rgx; }
 	if (rgx.m_stringPattern.empty()) { return *this; }
-	return { m_stringPattern + "+" + rgx.m_stringPattern };
+	return { m_stringPattern + "|" + rgx.m_stringPattern };
 }
 
 RegEx RegEx::Concatenation(const RegEx& rgx) const

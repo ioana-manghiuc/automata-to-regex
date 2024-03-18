@@ -19,15 +19,12 @@ public:
 	void RemoveState(const std::string& state);
 
 	std::string RandomState(); // choose random non-endpoint state (NOT i or f)
-	std::map<std::string, std::string> GetStatesConnectedVia(const std::string& state) const;
+	std::vector<std::pair<std::string, std::string>> GetStatesConnectedVia(const std::string& state) const;
 	RegEx GetDirectTransitionLabelBetween(const std::string& lhs, const std::string& rhs);
 	RegEx ComputeRegexForStates(const std::string& p, const std::string& k, const std::string& q);
 	void ReplaceLabels();
 
 	RegEx RegularExpression();
-	// compute regular expression
-	// change transition label
-	// simplify regex path
 
 	friend std::ostream& operator<<(std::ostream& os, const FiniteAutomata& M);
 

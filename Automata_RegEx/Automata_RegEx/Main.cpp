@@ -8,13 +8,17 @@ int main()
 	std::cout << std::endl << std::endl;
 	std::cout << FA;
 
-	std::string state = FA.RandomState();
-	std::cout << state << "\n\n";
-	FA.GetStatesConnectedVia("0");
-	RegEx rgx = FA.GetDirectTransitionLabelBetween("1", "2");
-	std::cout << std::endl << rgx.GetStringPattern() << std::endl;
-	std::cout << FA;
+	RegEx rgx = FA.RegularExpression();
+	rgx.SetRegexPattern(rgx.GetStringPattern());
+	std::cout << std::endl << rgx << std::endl;
+	if (rgx.CheckWord("abceeedab"))
+	{
+		std::cout << "\nword accepted\n";
+	}
+	else
+	{
+		std::cout << "\nword not accepted\n";
+	}
 
-	std::cout << std::endl << FA.RegularExpression() << std::endl;
 	return 0;
 }

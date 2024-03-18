@@ -11,6 +11,7 @@ public:
 
 	const std::regex& GetRegexPattern() const;
 	const std::string& GetStringPattern() const;
+	void SetRegexPattern(const std::string& pattern);
 
 	RegEx Union(const RegEx& rgx) const;
 	RegEx Concatenation(const RegEx& rgx) const;
