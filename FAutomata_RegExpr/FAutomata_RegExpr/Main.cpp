@@ -4,7 +4,7 @@ int main()
 {
 	FiniteAutomata FA;
 	std::cout << FA;
-	FA.UniformFiniteAutomaton();
+	FA.UniformFiniteAutomata();
 	std::cout << std::endl << std::endl;
 	std::cout << FA;
 	std::cout << FA.RandomState();

@@ -24,12 +24,18 @@
     <ClCompile Include="Transition.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="RegEx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Transition.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FiniteAutomata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RegEx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

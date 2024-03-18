@@ -15,22 +15,16 @@ const std::vector<Transition>& FiniteAutomata::GetTransitions()
 
 int FiniteAutomata::GetStateSize()
 {
-	int size = 0;
-	for (char c : m_states)
-	{
-		if (c != ' ')
-		{
-			size++;
-		}
-	}
-	return size;
+	return std::count_if(m_states.begin(), m_states.end(), [](char c) {
+		return c != ' ';
+		});
 }
 
 bool FiniteAutomata::TransitionExists(char leftState, std::string symbol, std::string rightState, std::vector<Transition> transitions)
 {
 	for (Transition t : transitions)
 	{
-		if (t.GetArguments().first == leftState && t.GetArguments().second == symbol
+		if (t.GetArguments().first == leftState && t.GetArguments().second.GetStringPattern() == symbol
 			&& t.GetResult() == rightState)
 		{
 			return true;
@@ -43,55 +37,43 @@ char FiniteAutomata::RandomState()
 {
 	std::random_device RD; // random device to generate a seed for the random number engine
 	std::mt19937 engine(RD()); // Mersenne Twister pseudo-random number engine, seeded with the random device
-	std::uniform_int_distribution<> distr(0, m_states.size() - 1); // uniform distribution for integers within [0, productions.size() - 1]
+	std::uniform_int_distribution<> distr(0, m_states.size() - 1); // uniform distribution for integers within the size
 
-	char randState = m_states[distr(engine)];
-	bool generate = true;
-	while (generate)
+	char randState;
+	do
 	{
-		if (std::string(1, randState) != m_finalStates
-			&& randState != m_initialState
-			&& randState != ' ')
-		{
-			generate = false;
-			return randState;
-		}
-		else
-		{
-			randState = m_states[distr(engine)];
-		}
-	}
+		randState = m_states[distr(engine)]; 
+	} while (randState == m_initialState || randState == ' ' ||
+			m_finalStates.find(randState) != std::string::npos);
+	
+	return randState;
 }
 
-void FiniteAutomata::UniformFiniteAutomaton()
+void FiniteAutomata::UniformFiniteAutomata()
 {
 	char newInitialState = 'i';
 	char newFinalState = 'f';
 	std::string initState(1, m_initialState);
 	std::string finalState(1, newFinalState);
+	RegEx rgx(lambda);
 
-	std::vector<Transition> newTransitions;
-	newTransitions = m_transitions;
-	for (Transition t : m_transitions)
+	std::vector<Transition> newTransitions = m_transitions;
+
+	if (!TransitionExists(newInitialState, lambda, initState, newTransitions))
 	{
-		if (t.GetArguments().first == m_initialState)
+		Transition newTransition(newInitialState, rgx, initState);
+		newTransitions.push_back(newTransition);
+	}
+
+	for (char c : m_finalStates)
+	{
+		if (c != ' ' && !TransitionExists(c, lambda, finalState, newTransitions))
 		{
-			if (!TransitionExists(newInitialState, lambda, initState, newTransitions))
-			{
-				Transition newTransition(newInitialState, lambda, initState);
-				newTransitions.push_back(newTransition);
-			}
-		}
-		for (char c : m_finalStates)
-		{
-			if ((t.GetArguments().first == c || t.GetResult() == std::string(1, c))
-				&& (!TransitionExists(c, lambda, finalState, newTransitions)))
-			{
-				Transition newTransition(c, lambda, finalState);
-				newTransitions.push_back(newTransition);
-			}
+			Transition newTransition(c, rgx, finalState);
+			newTransitions.push_back(newTransition);
 		}
 	}
+
 	if ((m_states.find(newInitialState) == std::string::npos) &&
 		(m_states.find(newFinalState) == std::string::npos))
 	{
@@ -140,7 +122,7 @@ std::ostream& operator<<(std::ostream& os, const FiniteAutomata& M)
 	os << "M = ({" << M.m_states << "}, {" <<
 		M.m_alphabet << "}, transitions, " << M.m_initialState << ", {" << M.m_finalStates << "})\n";
 	os << "transitions:\n";
-	std::map<std::pair<char, std::string>, std::vector<std::string>> mapOfArguments;
+	std::map<std::pair<char, RegEx>, std::vector<std::string>> mapOfArguments;
 
 	for (Transition t : M.m_transitions)
 	{

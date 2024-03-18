@@ -11,7 +11,7 @@ public:
 	const std::vector<Transition>& GetTransitions();
 
 	bool TransitionExists(char leftState, std::string symbol, std::string rightState, std::vector<Transition> transitions);
-	void UniformFiniteAutomaton();
+	void UniformFiniteAutomata();
 
 	char RandomState(); // choose random non-endpoint state (NOT i or f)
 

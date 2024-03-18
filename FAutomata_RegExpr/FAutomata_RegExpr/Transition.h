@@ -1,15 +1,15 @@
 #pragma once
 #include <iostream>
-#include <string>
+#include "RegEx.h"
 
 class Transition
 {
 public:
 	Transition();
-	Transition(char leftState, std::string symbol, std::string rightState);
-	Transition(std::pair<char, std::string>left, std::string right);
+	Transition(char leftState, RegEx rgx, std::string rightState);
+	Transition(std::pair<char, RegEx>left, std::string right);
 
-	std::pair<char, std::string> GetArguments() const;
+	std::pair<char, RegEx> GetArguments() const;
 	std::string GetResult() const;
 
 	bool IsSelfTransition();
@@ -18,7 +18,7 @@ public:
 	friend std::ostream& operator<<(std::ostream& os, const Transition& t);
 
 private:
-	std::pair<char, std::string>m_left;
+	std::pair<char, RegEx>m_left;
 	std::string m_right;
 };
 

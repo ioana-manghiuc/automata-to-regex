@@ -2,20 +2,22 @@
 
 Transition::Transition()
 {
+	// Empty
 }
 
-Transition::Transition(char leftState, std::string symbol, std::string rightState)
+Transition::Transition(char leftState, RegEx rgx, std::string rightState)
 {
-	m_left = std::make_pair(leftState, symbol);
+	m_left = std::make_pair(leftState, rgx);
 	m_right = rightState;
 }
 
-Transition::Transition(std::pair<char, std::string> left, std::string right) :
+Transition::Transition(std::pair<char, RegEx> left, std::string right) :
 	m_left(left), m_right(right)
 {
+	// Empty
 }
 
-std::pair<char, std::string> Transition::GetArguments() const
+std::pair<char, RegEx> Transition::GetArguments() const
 {
 	return m_left;
 }
@@ -34,7 +36,8 @@ std::istream& operator>>(std::istream& is, Transition& t)
 {
 	char left_one, left_two;
 	is >> left_one >> left_two >> t.m_right;
-	t.m_left = std::make_pair(left_one, left_two);
+	RegEx rgx(std::string(1, left_two));
+	t.m_left = std::make_pair(left_one, rgx);
 	return is;
 }
 
