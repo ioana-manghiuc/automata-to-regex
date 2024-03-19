@@ -6,6 +6,7 @@
 FiniteAutomata::FiniteAutomata()
 {
 	ReadTransitionsFromFile();
+	std::cout << *this;
 	UniformFiniteAutomata();
 }
 
@@ -22,14 +23,13 @@ void FiniteAutomata::ReadTransitionsFromFile()
 					std::istream_iterator<std::string>{} };
 
 		std::getline(input, m_alphabet);
+		std::getline(input, m_initialState);
 
 		std::string finStates;
 		std::getline(input, finStates);
 		std::istringstream finstream(finStates);
 		m_finalStates = { std::istream_iterator<std::string>{finstream},
 							std::istream_iterator<std::string>{} };
-
-		input >> m_initialState;
 
 		int size;
 		input >> size;
@@ -255,7 +255,6 @@ void FiniteAutomata::ReplaceLabels()
 	
 	RemoveState(randomState);
 	std::cout << "POST-STATE REMOVAL:\n" << * this;
-
 }
 
 RegEx FiniteAutomata::RegularExpression()
