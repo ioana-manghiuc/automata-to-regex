@@ -1,10 +1,12 @@
 #include "FiniteAutomata.h"
 #include <fstream>
 #include <random>
+#include <sstream>
 
 FiniteAutomata::FiniteAutomata()
 {
 	ReadTransitionsFromFile();
+	UniformFiniteAutomata();
 }
 
 void FiniteAutomata::ReadTransitionsFromFile()
@@ -13,10 +15,22 @@ void FiniteAutomata::ReadTransitionsFromFile()
 
 	if (input.is_open())
 	{
-		std::getline(input, m_states);
+		std::string states;
+		std::getline(input, states);
+		std::istringstream stream(states);
+		m_states = { std::istream_iterator<std::string>{stream},
+					std::istream_iterator<std::string>{} };
+
 		std::getline(input, m_alphabet);
-		std::getline(input, m_finalStates);
+
+		std::string finStates;
+		std::getline(input, finStates);
+		std::istringstream finstream(finStates);
+		m_finalStates = { std::istream_iterator<std::string>{finstream},
+							std::istream_iterator<std::string>{} };
+
 		input >> m_initialState;
+
 		int size;
 		input >> size;
 		Transition transition;
@@ -33,95 +47,58 @@ void FiniteAutomata::ReadTransitionsFromFile()
 	input.close();
 }
 
+void FiniteAutomata::UniformFiniteAutomata()
+{
+	std::string initState( 1, 'i' );
+	std::string finalState(1, 'f' );
+	RegEx rgx(lambda);
+
+	std::vector<Transition> newTransitions = m_transitions;
+
+	if (!TransitionExists(initState, lambda, m_initialState, newTransitions))
+	{
+		Transition newTransition(initState, rgx, m_initialState);
+		newTransitions.push_back(newTransition);
+	}
+
+	for (const std::string& state: m_finalStates)
+	{
+		if (!TransitionExists(state, lambda, finalState, newTransitions))
+		{
+			Transition newTransition(state, rgx, finalState);
+			newTransitions.push_back(newTransition);
+		}
+	}
+
+	if (std::find(m_states.begin(), m_states.end(), initState) == m_states.end() &&
+		std::find(m_states.begin(), m_states.end(), finalState) == m_states.end())
+	{
+		m_states.push_back(initState);
+		m_states.push_back(finalState);
+	}
+
+	m_transitions = newTransitions;
+	m_initialState = initState;
+	m_finalStates = { finalState };
+}
+
 const std::vector<Transition>& FiniteAutomata::GetTransitions() const
 {
 	return m_transitions;
-}
-
-Transition FiniteAutomata::GetTransitionOf(const std::string& left, const std::string& right) const
-{
-	auto it = std::find_if(m_transitions.begin(), m_transitions.end(), [&](const Transition& t) {
-		return t.GetArguments().first == left && t.GetResult() == right;
-		});
-
-	if (it != m_transitions.end()) {
-		return *it;
-	}
-	else {
-		throw std::runtime_error("Transition not found");
-	}
-}
-
-int FiniteAutomata::GetStateSize()
-{
-	return std::count_if(m_states.begin(), m_states.end(), [](char c) {
-		return c != ' ';
-		});
 }
 
 bool FiniteAutomata::TransitionExists(std::string leftState, std::string symbol, std::string rightState, std::vector<Transition> transitions)
 {
 	for (Transition t : transitions)
 	{
-		if (t.GetArguments().first == leftState && t.GetArguments().second.GetStringPattern() == symbol
+		if (t.GetArguments().first == leftState 
+			&& t.GetArguments().second.GetStringPattern() == symbol
 			&& t.GetResult() == rightState)
 		{
 			return true;
 		}
 	}
 	return false;
-}
-
-bool FiniteAutomata::TransitionExists(std::string leftState, std::string rightState, std::vector<Transition> transitions)
-{
-	for (Transition t : transitions)
-	{
-		if (t.GetArguments().first == leftState && t.GetResult() == rightState)
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-void FiniteAutomata::UniformFiniteAutomata()
-{
-	char newInitialState = 'i';
-	char newFinalState = 'f';
-	std::string initState(1, newInitialState);
-	std::string finalState(1, newFinalState);
-	RegEx rgx(lambda);
-
-	std::vector<Transition> newTransitions = m_transitions;
-
-	if (!TransitionExists(initState, lambda, std::string(1, m_initialState), newTransitions))
-	{
-		Transition newTransition(initState, rgx, std::string(1, m_initialState));
-		newTransitions.push_back(newTransition);
-	}
-
-	for (char c : m_finalStates)
-	{
-		std::string chr(1, c);
-		if (c != ' ' && !TransitionExists(chr, lambda, finalState, newTransitions))
-		{
-			Transition newTransition(chr, rgx, finalState);
-			newTransitions.push_back(newTransition);
-		}
-	}
-
-	if ((m_states.find(newInitialState) == std::string::npos) &&
-		(m_states.find(newFinalState) == std::string::npos))
-	{
-		m_states.push_back(' ');
-		m_states.push_back(newInitialState);
-		m_states.push_back(' ');
-		m_states.push_back(newFinalState);
-	}
-
-	m_transitions = newTransitions;
-	m_initialState = newInitialState;
-	m_finalStates = finalState;
 }
 
 void FiniteAutomata::RemoveTransition(const Transition& t)
@@ -137,34 +114,33 @@ void FiniteAutomata::RemoveTransition(const Transition& t)
 
 void FiniteAutomata::RemoveState(const std::string& state)
 {
-	m_states.erase(std::remove(m_states.begin(), m_states.end(), state[0]), m_states.end());
+	m_states.erase(std::remove(m_states.begin(), m_states.end(), state), m_states.end());
 
 	m_transitions.erase(std::remove_if(m_transitions.begin(), m_transitions.end(),
 		[state, this](const Transition& t) {
-			return (t.GetArguments().first == state || t.GetResult() == state) 
-				&& (t.GetArguments().first != std::string(1,m_initialState && (t.GetResult() != m_finalStates))) ;
+			return (t.GetArguments().first == state || t.GetResult() == state);
 		}), m_transitions.end());
 }
 
 std::string FiniteAutomata::RandomState()
 {
-	std::random_device RD; // random device to generate a seed for the random number engine
-	std::mt19937 engine(RD()); // Mersenne Twister pseudo-random number engine, seeded with the random device
-	std::uniform_int_distribution<> distr(0, m_states.size() - 1); // uniform distribution for integers within the size
+	std::random_device RD; 
+	std::mt19937 engine(RD()); 
+	std::uniform_int_distribution<> distr(0, m_states.size() - 1);
 
-	char randState;
+	std::string randState;
 	do
 	{
 		randState = m_states[distr(engine)];
-	} while (randState == m_initialState || randState == ' ' ||
-		m_finalStates.find(randState) != std::string::npos);
+	} while (randState == m_initialState || randState == " " ||
+		std::find(m_finalStates.begin(), m_finalStates.end(), randState) != m_finalStates.end());
 
-	return std::string(1, randState);
+	return randState;
 }
 
-std::vector<std::pair<std::string, std::string>> FiniteAutomata::GetStatesConnectedVia(const std::string& state) const
+std::multimap<std::string, std::string> FiniteAutomata::GetStatesConnectedVia(const std::string& state) const
 {
-	std::vector<std::pair<std::string, std::string>> connectedStates{};
+	std::multimap<std::string, std::string> connectedStates{};
 	std::vector<Transition> stateOnLeft, stateOnRight;
 
 	auto isStateOnLeft = [&state](const Transition& t) { return t.GetArguments().first == state; };
@@ -179,8 +155,8 @@ std::vector<std::pair<std::string, std::string>> FiniteAutomata::GetStatesConnec
 		{
 			if (onRight.GetArguments().first != state && onLeft.GetResult() != state)
 			{
-				std::cout << "\nright: " << onRight.GetArguments().first << "\nleft: " << onLeft.GetResult() << "\n";
-				connectedStates.push_back(std::make_pair(onRight.GetArguments().first,
+				std::cout << "right: " << onRight.GetArguments().first << "\nleft: " << onLeft.GetResult() << "\n\n";
+				connectedStates.insert(std::make_pair(onRight.GetArguments().first,
 					onLeft.GetResult()));
 			}
 		}
@@ -190,6 +166,7 @@ std::vector<std::pair<std::string, std::string>> FiniteAutomata::GetStatesConnec
 	{
 		std::cout << pair.first << " -> " << state << " -> " << pair.second << "\n";
 	}
+	std::cout << "\n";
 
 	return connectedStates;
 }
@@ -249,7 +226,7 @@ RegEx FiniteAutomata::ComputeRegexForStates(const std::string& p, const std::str
 void FiniteAutomata::ReplaceLabels()
 {
 	std::string randomState = RandomState();
-	std::vector<std::pair<std::string, std::string>>  paths = GetStatesConnectedVia(randomState);
+	std::multimap<std::string, std::string>  paths = GetStatesConnectedVia(randomState);
 
 	if (!paths.empty())
 	{
@@ -257,7 +234,7 @@ void FiniteAutomata::ReplaceLabels()
 		{
 			RegEx rgx = ComputeRegexForStates(path.first, randomState, path.second);
 			rgx.RemoveLambdas();
-			std::cout << "\nregex form:" << rgx.GetStringPattern() << "\n\n";
+			std::cout << "\nREGEX FORM: " << rgx.GetStringPattern() << "\n\n";
 
 			auto existingTransition = std::find_if(m_transitions.begin(), m_transitions.end(), 
 				[&](const Transition& t)
@@ -286,11 +263,14 @@ RegEx FiniteAutomata::RegularExpression()
 	do
 	{
 		ReplaceLabels();
-	} while (GetStateSize() > 2);
+
+	} while (m_states.size() > 2);
 
 	if (!m_transitions.empty())
 	{
-		return m_transitions[0].GetArguments().second;
+		RegEx rgx = m_transitions[0].GetArguments().second;
+		rgx.SetRegexPattern(rgx.GetStringPattern());
+		return rgx;
 	}
 	else
 	{
@@ -301,8 +281,34 @@ RegEx FiniteAutomata::RegularExpression()
 
 std::ostream& operator<<(std::ostream& os, const FiniteAutomata& M)
 {
-	os << "M = ({" << M.m_states << "}, {" <<
-		M.m_alphabet << "}, transitions, " << M.m_initialState << ", {" << M.m_finalStates << "})\n";
+	os << "M = ({";
+	for (const std::string& state : M.m_states)
+	{
+		if (state == M.m_states[M.m_states.size() - 1])
+		{
+			os << state;
+		}
+		else
+		{
+			os << state << " ";
+		}
+	}
+	os << "}, {" <<
+		M.m_alphabet << "}, transitions, " << M.m_initialState << ", ";
+	if (M.m_finalStates.size() == 1)
+	{
+		os << M.m_finalStates[0];
+	}
+	else
+	{
+		os << "{ ";
+		for (const std::string& state : M.m_finalStates)
+		{
+			os << state << " ";
+		}
+		os << "}";
+	}
+	os << ")\n";
 	os << "transitions:\n";
 
 	std::map<std::pair<std::string, RegEx>, std::vector<std::string>> mapOfArguments;
@@ -339,5 +345,6 @@ std::ostream& operator<<(std::ostream& os, const FiniteAutomata& M)
 	{
 		os << "empty map!\n";
 	}
+	os << "\n";
 	return os;
 }

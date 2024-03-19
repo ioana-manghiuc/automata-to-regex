@@ -5,6 +5,7 @@
 class Transition
 {
 public:
+
 	Transition();
 	Transition(std::string leftState, RegEx rgx, std::string rightState);
 	Transition(std::pair<std::string, RegEx>left, std::string right);
