@@ -28,22 +28,26 @@ const std::string& RegEx::GetStringPattern() const
 void RegEx::SetRegexPattern(const std::string& pattern)
 {
 	m_pattern = std::regex(pattern);
+	m_stringPattern = pattern;
 }
 
 RegEx RegEx::Union(const RegEx& rgx) const
 {
 	if (m_stringPattern.empty()) { return rgx; }
-	if (rgx.m_stringPattern.empty()) { return *this; }
-	return { m_stringPattern + "|" + rgx.m_stringPattern };
+	if (rgx.m_stringPattern.empty() || rgx.m_stringPattern == "&") { return *this; }
+	/*if (rgx.m_stringPattern != "&")*/ { return { "(" + m_stringPattern + "|" + rgx.m_stringPattern + ")"}; }
 }
 
 RegEx RegEx::Concatenation(const RegEx& rgx) const
 {
-	return { m_stringPattern + rgx.m_stringPattern };
+	/*if (rgx.m_stringPattern != "&")*/ { return { m_stringPattern + rgx.m_stringPattern }; }
+	/*else { return m_stringPattern; }*/
 }
+
 
 RegEx RegEx::KleeneStar() const
 {
+	/*if (m_stringPattern == "&") { return RegEx(" "); }*/
 	if (m_stringPattern.empty()) { return m_stringPattern; }
 	if (m_stringPattern.size() == 1) { return { m_stringPattern + "*" }; }
 	if (m_stringPattern[0] == '(' && m_stringPattern[m_stringPattern.size() - 1] == ')')
@@ -55,9 +59,12 @@ RegEx RegEx::KleeneStar() const
 
 void RegEx::RemoveLambdas()
 {
-	m_stringPattern.erase(std::remove_if(m_stringPattern.begin(), m_stringPattern.end(),
-		[](char c) { return c == '&'; }),
-		m_stringPattern.end());
+	if (m_stringPattern != "&")
+	{
+		m_stringPattern.erase(std::remove_if(m_stringPattern.begin(), m_stringPattern.end(),
+			[](char c) { return c == '&'; }),
+			m_stringPattern.end());
+	}
 }
 
 bool RegEx::CheckWord(const std::string& word)

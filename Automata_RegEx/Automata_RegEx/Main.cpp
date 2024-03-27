@@ -6,7 +6,7 @@ int main()
 	std::cout << FA;
 
 	RegEx rgx = FA.RegularExpression();
-	std::cout << "\nREGULAR EXPRESSION: " << rgx << std::endl;
+    std::cout << "\nREGULAR EXPRESSION: " << rgx << std::endl;
 
     while (true)
     {
@@ -14,7 +14,7 @@ int main()
         std::cout << "\nWORD: ";
         std::getline(std::cin, input);
 
-        if (input.empty()) {
+        if (input == "x") {
             break; 
         }
 

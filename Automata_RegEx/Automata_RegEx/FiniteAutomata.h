@@ -27,6 +27,7 @@ public:
 private:
 	void UniformFiniteAutomata();
 	void ReadTransitionsFromFile();
+	void MergeDirectTransitions();
 
 private:
 	std::vector<std::string> m_states;
